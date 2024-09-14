@@ -1,0 +1,79 @@
+This repository contains a minimal Emacs configuration to support Ada development, which includes the installation and configuration of packages for Ada and GNAT Project.  This also includes the installation of LSP client packages ~eglot~ and ~lsp-mode~.  The specific LSP client to use is controlled in =early-init.el=.  Emacs 29 is required in order to use the tree-sitter based packages included in this configuration.
+
+* Installation/Startup
+
+The expectation is that this configuration will be used as an example configuration and not the user's default configuration.  Therefore, the following instructions place the configuration in a non-standard location and then specify that location when starting Emacs.
+
+#+BEGIN_SRC shell
+  git clone https://github.com/brownts/dotemacs-ada ~/.emacs-ada.d
+  emacs --init-directory=~/.emacs-ada.d
+#+END_SRC
+
+Once started, the packages identified in the configuration (i.e., =init.el=) will be downloaded from an ELPA and installed.
+
+* Tree-Sitter Language Library Binary Installation
+
+By default, the tree-sitter library for Ada and GPR will be downloaded and built from source when the major mode is loaded.  If you'd prefer to install a pre-built language library instead, you can obtain these from the following location:
+- [[https://github.com/casouri/tree-sitter-module/releases]]
+
+If manually installing, the shard libraries should be placed in the =tree-sitter= directory beneath ~user-emacs-directory~.  If using the installation instructions above, that would be =~/.emacs-ada.d/tree-sitter/=.
+
+* Configure Preferred LSP Client
+
+To configure ~lsp-mode~ as the preferred LSP client, use the following in =early-init.el=:
+#+BEGIN_SRC elisp
+(setq init.el/preferred-lsp-client 'lsp-mode)
+#+END_SRC elisp
+
+To configure ~eglot~ as the preferred LSP client, use the following in =early-init.el=:
+#+BEGIN_SRC elisp
+(setq init.el/preferred-lsp-client 'eglot)
+#+END_SRC elisp
+
+* Language Server Installation
+
+The ~lsp-mode~ package includes the ability to install the Ada Language Server when ~lsp-mode~ is enabled in an Ada or GPR buffer.  If the Ada Language Server is installed in this manner, it will be installed in the =.cache/lsp/ada-ls= directory beneath ~user-emacs-directory~ (e.g., =~/.emacs-ada.d/.cache/lsp/ada-ls/=).  If the Ada Language Server is found on the path, the server found there will be used instead.  If desired, the Language Server can be installed manually by downloading it from the GitHub [[https://github.com/AdaCore/ada_language_server/releases][repository]] and placing it somewhere on the path.
+
+The ~eglot~ package does not include the ability to install the Ada Language Server.  There are two options for installation.  The first option is to manually install the Ada Language Server somewhere on the path.  The second option is to first use the ~lsp-mode~ package and let it install the server before changing ~init.el/preferred-lsp-client~ from ~lsp-mode~ to ~eglot~ and then restarting Emacs.  The Emacs configuration in this repository will add ~lsp-mode~'s Ada Language Server installation directory to Emacs' ~exec-path~ so that a previous installation can be used by Eglot.
+
+* Example Usage (GtkAda)
+
+The following example assumes the Alire tool (i.e., ~alr~) is already installed.  If not, visit [[https://alire.ada.dev/][alire.ada.dev]] to download and install it.
+
+** Obtain the GtkAda crate
+#+BEGIN_SRC shell
+  alr get gtkada
+  cd gtkada*
+#+END_SRC
+*Note*: In the above =alr get= command, the GtkAda directory name will contain the version and a hash, thus the use of the wildcard when changing into that directory.
+
+** Create .dir-locals.el
+
+Next, create a ~.dir-locals.el~ file with the following contents in the top-level directory of the GtkAda crate directory we just obtained:
+ #+BEGIN_SRC elisp
+   ((ada-ts-mode . ((lsp-ada-project-file "src/gtkada.gpr")
+                    (eglot-workspace-configuration
+                     (:ada (:projectFile "src/gtkada.gpr")))))
+    (nil . ((compile-command "alr build -- -gnatef"))))
+ #+END_SRC
+It should be noted that ~lsp-ada-project-file~ is used by ~lsp-mode~ to inform the Ada Language Server the path to the project file.  For Eglot, the same is performed by using the ~eglot-workspace-configuration~ and its associated property list.  Refer to the Eglot [[https://www.gnu.org/software/emacs/manual/html_mono/eglot.html#Project_002dspecific-configuration][Project-specific configuration]], ~lsp-mode~ [[https://emacs-lsp.github.io/lsp-mode/page/lsp-ada/][Ada Language configuration]] as well as the Ada Language Server [[https://github.com/AdaCore/ada_language_server/blob/master/doc/settings.md][Settings]] to learn about additional configuration options and the specific formatting of those options required by each LSP client.
+
+*Note*: Technically it's not necessary to specify the project file configuration in the ~.dir-locals.el~ if the Ada Language Server can find it in =alire.toml=, but the above is used to demonstrate how to manually configure the project file using either of the available Emacs LSP clients, if needed.
+
+The compilation command is also specified here which is used whenever a compilation is performed (e.g., ~project-compile~ via =C-x p c=).  Since this is an Alire project, an Alire build command is used.
+
+** Configure Source Code Formatting
+
+In order to support LSP-based indentation, it is useful to add a  ~Pretty_Printer~ section to the GPR file (i.e., in =src/gtkada.gpr=) and configure it so that the Language Server formatting engine does not significantly restructure the source.
+#+BEGIN_SRC gpr
+  package Pretty_Printer is
+     for Default_Switches ("Ada") use ("--source-line-breaks");
+  end Pretty_Printer;
+#+END_SRC
+
+** Use Emacs
+
+Open any Ada or GPR file and enjoy!  Performing a compilation within Emacs (=C-x p c=) will build the project using the compilation command specified in the ~.dir-locals.el~ file created earlier.
+#+BEGIN_SRC shell
+  emacs --init-directory=~/.emacs-ada.d src/gtkada-application.adb
+#+END_SRC
