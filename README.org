@@ -4,6 +4,8 @@ This repository contains a minimal Emacs configuration to support Ada developmen
 
 The expectation is that this configuration will be used as an example configuration and not the user's default configuration.  Therefore, the following instructions place the configuration in a non-standard location and then specify that location when starting Emacs.
 
+*Note*: If using =~/.emacs= as your configuration file, use of ~--init-directory~ does not work as expected.  Therefore, you'll need to rename =~/.emacs= so that the configuration in this repository can be used correctly.
+
 #+BEGIN_SRC shell
   git clone https://github.com/brownts/dotemacs-ada ~/.emacs-ada.d
   emacs --init-directory=~/.emacs-ada.d
