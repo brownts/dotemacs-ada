@@ -52,14 +52,11 @@ The following example assumes the Alire tool (i.e., ~alr~) is already installed.
 ** Create .dir-locals.el
 
 Next, create a ~.dir-locals.el~ file with the following contents in the top-level directory of the GtkAda crate directory we just obtained:
- #+BEGIN_SRC elisp
-   ((ada-ts-mode . ((lsp-ada-project-file . "src/gtkada.gpr")))
-    ;; Eglot uses the first `major-mode' in `eglot-server-programs' for
-    ;; the Language Server, therefore we have to use `ada-mode' here
-    ;; instead of `ada-ts-mode'.  This seems like a bug!
-    (ada-mode . ((eglot-workspace-configuration . (:ada (:projectFile "src/gtkada.gpr")))))
-    (nil . ((compile-command . "alr build -- -gnatef"))))
- #+END_SRC
+#+BEGIN_SRC elisp
+  ((nil . ((lsp-ada-project-file . "src/gtkada.gpr")
+           (eglot-workspace-configuration . (:ada (:projectFile "src/gtkada.gpr")))
+           (compile-command . "alr build -- -cargs:ada -gnatef"))))
+#+END_SRC
 It should be noted that ~lsp-ada-project-file~ is used by ~lsp-mode~ to inform the Ada Language Server the path to the project file.  For Eglot, the same is performed by using the ~eglot-workspace-configuration~ and its associated property list.  Refer to the Eglot [[https://www.gnu.org/software/emacs/manual/html_mono/eglot.html#Project_002dspecific-configuration][Project-specific configuration]], ~lsp-mode~ [[https://emacs-lsp.github.io/lsp-mode/page/lsp-ada/][Ada Language configuration]] as well as the Ada Language Server [[https://github.com/AdaCore/ada_language_server/blob/master/doc/settings.md][Settings]] to learn about additional configuration options and the specific formatting of those options required by each LSP client.
 
 *Note*: Technically it's not necessary to specify the project file configuration in the ~.dir-locals.el~ if the Ada Language Server can find it in =alire.toml=, but the above is used to demonstrate how to manually configure the project file using either of the available Emacs LSP clients, if needed.

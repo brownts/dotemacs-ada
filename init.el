@@ -149,6 +149,7 @@
               :filter-args #'init.el/fix-eol/lsp--render-string)
   :custom ((lsp-auto-guess-root t)
            (lsp-enable-indentation nil) ; Let major mode control indentation
+           (lsp-enable-on-type-formatting nil) ; Interferes with Emacs indenting
            (lsp-headerline-breadcrumb-enable nil)
            (lsp-keymap-prefix "C-c l")
            (lsp-semantic-tokens-enable t)
