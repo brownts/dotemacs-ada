@@ -185,6 +185,22 @@
   :demand t
   :config (which-function-mode))
 
+;;;; Xref
+
+(use-package xref
+  :ensure nil ; built-in
+  :preface
+  (defun init.el/fix-point/xref-find-definitions-at-mouse (event)
+    (interactive "e")
+    (mouse-set-point event))
+  :init
+  ;; Workaround for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=65578
+  (when (< emacs-major-version 30)
+    (advice-add 'xref-find-definitions-at-mouse
+                :before #'init.el/fix-point/xref-find-definitions-at-mouse))
+  :bind (("C-<mouse-1>" . #'ignore) ; Prevent "undefined" message on mouse up
+         ("C-<down-mouse-1>" . #'xref-find-definitions-at-mouse)))
+
 ;;;; YASnippet
 
 (use-package yasnippet
