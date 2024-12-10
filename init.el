@@ -55,7 +55,8 @@
   :custom (gpr-ts-mode-grammar-install 'auto)
   :init
   (with-eval-after-load 'org-src
-    (add-to-list 'org-src-lang-modes '("gpr" . gpr-ts))))
+    (add-to-list 'org-src-lang-modes '("gpr" . gpr-ts)))
+  :hook (gpr-ts-mode . gpr-ts-auto-case-mode))
 
 ;;;; Completion
 
