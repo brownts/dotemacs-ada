@@ -140,12 +140,6 @@
   :custom ((gc-cons-threshold 100000000)             ; 100MB
            (read-process-output-max (* 1024 1024)))) ; 1MB
 
-;;;; Electric Pair
-
-(use-package elec-pair
-  :ensure nil ; built-in
-  :hook ((ada-ts-mode gpr-ts-mode) . electric-pair-local-mode))
-
 ;;;; Files
 
 (use-package files
