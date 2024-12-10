@@ -2,7 +2,18 @@
 ;;; commentary:
 ;;; code:
 
-(defvar init.el/preferred-lsp-client)
+;;;; Configuration
+
+(defgroup init.el nil
+  "Configuration options for init.el."
+  :group 'emacs
+  :prefix "init.el/")
+
+(defcustom init.el/preferred-lsp-client 'lsp-mode
+  "Preferred LSP client."
+  :type '(choice (const lsp-mode)
+                 (const eglot))
+  :group 'init.el)
 
 ;;;; Custom
 

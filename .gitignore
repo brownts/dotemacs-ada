@@ -1,5 +1,5 @@
 !.gitignore
-!.early-init.el
-!.init.el
+!init.el
+!early-init.el
 !README.org
 *
