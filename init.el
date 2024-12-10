@@ -46,11 +46,43 @@
   (with-eval-after-load 'org-src
     (add-to-list 'org-src-lang-modes '("gpr" . gpr-ts))))
 
-;;;; Company
+;;;; Completion
+
+(use-package emacs
+  :ensure nil ; built-in
+  :init (setq completion-ignore-case t)
+  :custom (tab-always-indent 'complete)) ; Complete when already indented
+
+;;;;; Company
 
 (use-package company
+  :demand t
   :commands (global-company-mode)
+  :functions (company-indent-or-complete-common)
+  :bind
+  ;; Allow Company to be triggered manually through the normal
+  ;; `indent-for-tab-command' binding.  See the following link for
+  ;; details: https://emacs.stackexchange.com/a/46792
+  (:map company-mode-map
+        (([remap indent-for-tab-command] . company-indent-or-complete-common)))
+  ;; Use TAB instead of RET to complete
+  (:map company-active-map
+        (("RET"      . nil) ; remove from map
+         ("<return>" . nil) ; remove from map
+         ("TAB"      . company-complete-selection)
+         ("<tab>"    . company-complete-selection)))
+  :custom ((company-minimum-prefix-length 2)
+           (company-icon-margin 3)
+           (company-require-match nil)
+           (company-tooltip-align-annotations t))
   :config (global-company-mode))
+
+(use-package company-quickhelp
+  :custom ((company-quickhelp-delay 0.0)
+           ;; Workaround for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=74807
+           (company-quickhelp-use-propertized-text nil))
+  :commands (company-quickhelp-local-mode)
+  :hook (company-mode . company-quickhelp-local-mode))
 
 ;;;; Compile
 
@@ -204,7 +236,8 @@
 ;;;; YASnippet
 
 (use-package yasnippet
-  :hook (gpr-ts-mode . yas-minor-mode-on))
+  ;; LSP snippets are handled via YASnippet.
+  :hook ((eglot-managed-mode lsp-mode) . yas-minor-mode))
 
 (use-package gpr-yasnippets)
 
