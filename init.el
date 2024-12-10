@@ -181,6 +181,11 @@
                                       (split-string value eol))
                                     strings))))
       (cons (string-join strings "\n") (cdr args))))
+  (defun init.el/lsp-mode ()
+    ;; Delay start until after initialization of local variables as they may
+    ;; contain `lsp-mode' configuration variables.
+    (declare-function lsp "lsp-mode")
+    (add-hook 'hack-local-variables-hook #'lsp t 'local))
   :init
   (advice-add 'lsp--render-string
               :filter-args #'init.el/fix-eol/lsp--render-string)
@@ -196,7 +201,7 @@
                             ("M-?" . lsp-find-references)))
   :custom-face
   (lsp-face-semhl-number ((t (:inherit font-lock-number-face))))
-  :hook ((ada-ts-mode gpr-ts-mode) . lsp))
+  :hook ((ada-ts-mode gpr-ts-mode) . init.el/lsp-mode))
 
 ;;;; Markdown
 
