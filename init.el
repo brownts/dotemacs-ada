@@ -127,6 +127,7 @@
   (advice-add 'eglot--format-markup
               :filter-return #'init.el/fix-eol/eglot--format-markup)
   :hook ((ada-ts-mode gpr-ts-mode) . eglot-ensure)
+  :custom (eglot-extend-to-xref t) ; Consider external refs, part of project.
   :config
   ;; Let major mode control Imenu
   (add-to-list 'eglot-stay-out-of 'imenu)
