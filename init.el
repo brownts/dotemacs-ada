@@ -9,6 +9,12 @@
   :group 'emacs
   :prefix "init.el/")
 
+(defcustom init.el/preferred-diagnostics-reporter 'flymake
+  "Preferred diagnostics reporter."
+  :type '(choice (const flymake)
+                 (const flycheck))
+  :group 'init.el)
+
 (defcustom init.el/preferred-lsp-client 'lsp-mode
   "Preferred LSP client."
   :type '(choice (const lsp-mode)
@@ -96,6 +102,13 @@
   :commands (company-quickhelp-local-mode)
   :hook (company-mode . company-quickhelp-local-mode))
 
+;;;;; Minibuffer Completion
+
+(use-package vertico
+  :demand t
+  :commands (vertico-mode)
+  :config (vertico-mode))
+
 ;;;; Compile
 
 (use-package compile
@@ -103,6 +116,50 @@
   :custom (compilation-scroll-output t)
   :init
   (put 'compile-command 'safe-local-variable #'stringp))
+
+;;;; Diagnostics
+
+;;;;; Flycheck
+
+(use-package flycheck
+  :if (eq init.el/preferred-diagnostics-reporter 'flycheck)
+  :functions (flycheck-overlay-errors-at
+              flycheck-help-echo-all-error-messages)
+  :preface
+  (defun init.el/flycheck-errors-at-point (callback &rest _)
+    (when-let ((diagnostics (and (bound-and-true-p flycheck-mode)
+                                 (flycheck-overlay-errors-at (point)))))
+      (funcall callback
+               (flycheck-help-echo-all-error-messages
+                diagnostics))))
+  ;; Disable intrinsic display function, as Eldoc will be used instead.
+  :custom (flycheck-display-errors-function nil)
+  :init
+  ;; Configure Flycheck to display diagnostics via Eldoc
+  (add-hook 'eldoc-documentation-functions
+            #'init.el/flycheck-errors-at-point)
+  :hook (prog-mode . flycheck-mode))
+
+(use-package flycheck-eglot
+  :if (eq init.el/preferred-diagnostics-reporter 'flycheck)
+  :custom (flycheck-eglot-exclusive nil)
+  :hook (eglot-managed-mode . flycheck-eglot-mode))
+
+(use-package consult-flycheck
+  :if (eq init.el/preferred-diagnostics-reporter 'flycheck)
+  :bind ("M-g M-d" . consult-flycheck))
+
+;;;;; Flymake
+
+(use-package flymake
+  :ensure nil ; built-in
+  :if (eq init.el/preferred-diagnostics-reporter 'flymake)
+  :hook (prog-mode . flymake-mode))
+
+(use-package consult-flymake
+  :ensure consult ; part of consult
+  :if (eq init.el/preferred-diagnostics-reporter 'flymake)
+  :bind ("M-g M-d" . consult-flymake))
 
 ;;;; Eglot
 
@@ -192,6 +249,8 @@
   (advice-add 'lsp--render-string
               :filter-args #'init.el/fix-eol/lsp--render-string)
   :custom ((lsp-auto-guess-root t)
+           (lsp-diagnostics-provider
+            (intern (concat ":" (symbol-name init.el/preferred-diagnostics-reporter))))
            (lsp-enable-indentation nil) ; Let major mode control indentation
            (lsp-enable-on-type-formatting nil) ; Interferes with Emacs indenting
            (lsp-headerline-breadcrumb-enable nil)
