@@ -21,6 +21,12 @@
                  (const eglot))
   :group 'init.el)
 
+(defcustom init.el/preferred-documentation-ui 'box
+  "Preferred LSP documentation UI."
+  :type '(choice (const :tag "Child Frame" box)
+                 (const :tag "Echo Area"   echo))
+  :group 'init.el)
+
 ;;;; Custom
 
 ;; Don't pollute this file with custom settings
@@ -161,6 +167,33 @@
   :if (eq init.el/preferred-diagnostics-reporter 'flymake)
   :bind ("M-g M-d" . consult-flymake))
 
+;;;; Documentation
+
+(use-package eldoc
+  :ensure nil ; built-in
+  :custom (eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly))
+
+(use-package eldoc-box
+  :if (eq init.el/preferred-documentation-ui 'box)
+  :preface
+  (defun init.el/eldoc-box-max-pixel-width ()
+    ;; Cap child frame width based on parent frame width (so child
+    ;; isn't wider than parent), but try to respect the custom default
+    ;; width, when possible.
+    (defvar eldoc-box-offset)
+    (let* ((parent-width (frame-outer-width (selected-frame)))
+           (left-offset (nth 0 eldoc-box-offset))
+           (right-offset (nth 1 eldoc-box-offset))
+           (max-offset (max left-offset right-offset))
+           (default-max-width
+            (eval (car (get 'eldoc-box-max-pixel-width 'standard-value)))))
+      (max 0 (min default-max-width (- parent-width max-offset)))))
+  :custom ((eldoc-box-clear-with-C-g t)
+           (eldoc-box-max-pixel-width #'init.el/eldoc-box-max-pixel-width)
+           (eldoc-box-offset '(32 32 16))
+           (eldoc-box-only-multi-line nil))
+  :hook (prog-mode . eldoc-box-hover-mode))
+
 ;;;; Eglot
 
 (use-package eglot
@@ -177,6 +210,13 @@
                                       (split-string value eol))
                                     strings))))
       (string-join strings "\n")))
+  ;; Workaround for https://github.com/joaotavora/eglot/discussions/1467
+  (defun init.el/multiline/eglot-hover-eldoc-function (r)
+    (list
+     (lambda (info &rest _ignore)
+       ;; Ignore the `eglot-hover-eldoc-function' provided ":echo"
+       ;; cookie in order to display multi-line documentation.
+       (funcall (car r) info))))
   :init
   ;; Force upgrade to ELPA version for Emacs 29
   (unless (or (> emacs-major-version 29)
@@ -184,6 +224,8 @@
     (package-install (cadr (assoc 'eglot package-archive-contents))))
   (advice-add 'eglot--format-markup
               :filter-return #'init.el/fix-eol/eglot--format-markup)
+  (advice-add 'eglot-hover-eldoc-function
+              :filter-args #'init.el/multiline/eglot-hover-eldoc-function)
   :hook ((ada-ts-mode gpr-ts-mode) . eglot-ensure)
   :custom (eglot-extend-to-xref t) ; Consider external refs, part of project.
   :config
@@ -251,6 +293,7 @@
   :custom ((lsp-auto-guess-root t)
            (lsp-diagnostics-provider
             (intern (concat ":" (symbol-name init.el/preferred-diagnostics-reporter))))
+           (lsp-eldoc-render-all t)
            (lsp-enable-indentation nil) ; Let major mode control indentation
            (lsp-enable-on-type-formatting nil) ; Interferes with Emacs indenting
            (lsp-headerline-breadcrumb-enable nil)
