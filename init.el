@@ -300,9 +300,6 @@
            (lsp-keymap-prefix "C-c l")
            (lsp-semantic-tokens-enable t)
            (lsp-enable-imenu nil)) ; Let major mode control Imenu
-  ;; Add mapping for `lsp-mode' "xref" functions
-  :bind (:map lsp-mode-map (("M-." . lsp-find-definition)
-                            ("M-?" . lsp-find-references)))
   :custom-face
   (lsp-face-semhl-number ((t (:inherit font-lock-number-face))))
   :hook ((ada-ts-mode gpr-ts-mode) . init.el/lsp-mode))
