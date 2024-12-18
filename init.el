@@ -9,6 +9,23 @@
   :group 'emacs
   :prefix "init.el/")
 
+(defcustom init.el/completion-allow-lsp-trigger-chars t
+  "Allow LSP completion trigger characters to display completion UI.
+
+This will allow Language Server specified trigger characters to
+automatically display the completion UI, even if
+`init.el/completion-minimum-prefix-length' has not been met."
+  :type 'boolean
+  :group 'init.el)
+
+(defcustom init.el/completion-minimum-prefix-length 2
+  "Minimum prefix length before displaying the completion UI.
+
+Completion can always be started manually, but in order to automatically
+display the completion UI, this prefix length should be met."
+  :type 'integer
+  :group 'init.el)
+
 (defcustom init.el/preferred-diagnostics-reporter 'flymake
   "Preferred diagnostics reporter."
   :type '(choice (const flymake)
@@ -74,7 +91,6 @@
 
 (use-package emacs
   :ensure nil ; built-in
-  :init (setq completion-ignore-case t)
   :custom (tab-always-indent 'complete)) ; Complete when already indented
 
 ;;;;; Company
@@ -95,7 +111,7 @@
          ("<return>" . nil) ; remove from map
          ("TAB"      . company-complete-selection)
          ("<tab>"    . company-complete-selection)))
-  :custom ((company-minimum-prefix-length 2)
+  :custom ((company-minimum-prefix-length init.el/completion-minimum-prefix-length)
            (company-icon-margin 3)
            (company-require-match nil)
            (company-tooltip-align-annotations t))
@@ -217,6 +233,23 @@
        ;; Ignore the `eglot-hover-eldoc-function' provided ":echo"
        ;; cookie in order to display multi-line documentation.
        (funcall (car r) info))))
+  ;; Workaround completion issues
+  (defun init.el/fix-completion/eglot-completion-at-point (result)
+    (pcase result
+      (`(,beg ,end ,table . ,plist)
+       (let (settings case-fold-table)
+         ;; Allow next completion at point function (CAPF) specified
+         ;; in `completion-at-point-functions' to be queried when
+         ;; Language Server doesn't have any completions at point.
+         (setq settings (append settings '(:exclusive no)))
+         ;; When configured, prevent LSP trigger characters from
+         ;; initiating completion before hitting the threshold
+         ;; specified by `init.el/completion-minimum-prefix-length'.
+         (unless init.el/completion-allow-lsp-trigger-chars
+           (setq settings (append settings '(:company-prefix-length nil))))
+         ;; Perform case folding when matching against completion results
+         (setq case-fold-table (completion-table-case-fold table))
+         `(,beg ,end ,case-fold-table ,@settings ,@plist)))))
   :init
   ;; Force upgrade to ELPA version for Emacs 29
   (unless (or (> emacs-major-version 29)
@@ -226,11 +259,17 @@
               :filter-return #'init.el/fix-eol/eglot--format-markup)
   (advice-add 'eglot-hover-eldoc-function
               :filter-args #'init.el/multiline/eglot-hover-eldoc-function)
+  (advice-add 'eglot-completion-at-point
+              :filter-return #'init.el/fix-completion/eglot-completion-at-point)
   :hook ((ada-ts-mode gpr-ts-mode) . eglot-ensure)
   :custom (eglot-extend-to-xref t) ; Consider external refs, part of project.
   :config
   ;; Let major mode control Imenu
   (add-to-list 'eglot-stay-out-of 'imenu)
+  ;; Prefer "basic" completion style instead of the default
+  ;; "eglot--dumb-flex".
+  (add-to-list 'completion-category-overrides
+               '(eglot-capf (styles . (basic))))
   ;; Add `lsp-mode' language server installation location to
   ;; `exec-path' so Eglot can find it.
   (add-to-list 'exec-path
@@ -287,9 +326,28 @@
     ;; contain `lsp-mode' configuration variables.
     (declare-function lsp "lsp-mode")
     (add-hook 'hack-local-variables-hook #'lsp t 'local))
+  ;; Workaround completion issues
+  (defun init.el/fix-completion/lsp-completion-at-point (result)
+    (pcase result
+      (`(,beg ,end ,table . ,plist)
+       (let (settings case-fold-table)
+         ;; Allow next completion at point function (CAPF) specified
+         ;; in `completion-at-point-functions' to be queried when
+         ;; Language Server doesn't have any completions at point.
+         (setq settings (append settings '(:exclusive no)))
+         ;; When configured, prevent LSP trigger characters from
+         ;; initiating completion before hitting the threshold
+         ;; specified by `init.el/completion-minimum-prefix-length'.
+         (unless init.el/completion-allow-lsp-trigger-chars
+           (setq settings (append settings '(:company-prefix-length nil))))
+         ;; Perform case folding when matching against completion results
+         (setq case-fold-table (completion-table-case-fold table))
+         `(,beg ,end ,case-fold-table ,@settings ,@plist)))))
   :init
   (advice-add 'lsp--render-string
               :filter-args #'init.el/fix-eol/lsp--render-string)
+  (advice-add 'lsp-completion-at-point
+              :filter-return #'init.el/fix-completion/lsp-completion-at-point)
   :custom ((lsp-auto-guess-root t)
            (lsp-diagnostics-provider
             (intern (concat ":" (symbol-name init.el/preferred-diagnostics-reporter))))
@@ -302,7 +360,12 @@
            (lsp-enable-imenu nil)) ; Let major mode control Imenu
   :custom-face
   (lsp-face-semhl-number ((t (:inherit font-lock-number-face))))
-  :hook ((ada-ts-mode gpr-ts-mode) . init.el/lsp-mode))
+  :hook ((ada-ts-mode gpr-ts-mode) . init.el/lsp-mode)
+  :config
+  ;; Prefer "basic" completion style instead of the default
+  ;; "lsp-passthrough".
+  (add-to-list 'completion-category-overrides
+               '(lsp-capf (styles . (basic)))))
 
 ;;;; Markdown
 
