@@ -272,15 +272,23 @@ display the completion UI, this prefix length should be met."
                '(eglot-capf (styles . (basic))))
   ;; Add `lsp-mode' language server installation location to
   ;; `exec-path' so Eglot can find it.
-  (add-to-list 'exec-path
-               (expand-file-name
-                (let ((os-dir (cond ((eq system-type 'gnu/linux)  "linux")
-                                    ((eq system-type 'windows-nt) "win32")
-                                    ((eq system-type 'darwin)     "darwin")))
-                      (arch-dir (cond ((string-prefix-p "x86_64-"  system-configuration) "x64")
-                                      ((string-prefix-p "aarch64-" system-configuration) "arm64"))))
-                  (string-join `(".cache/lsp/ada-ls" ,arch-dir ,os-dir) "/"))
-                user-emacs-directory)))
+  (let* ((os-dir (cond ((eq system-type 'gnu/linux)  "linux")
+                       ((eq system-type 'windows-nt) "win32")
+                       ((eq system-type 'darwin)     "darwin")))
+         (arch-dir (cond ((string-prefix-p "x86_64-"  system-configuration) "x64")
+                         ((string-prefix-p "aarch64-" system-configuration) "arm64")))
+         ;; >= ALS 25.0.20240915
+         (archive-path-2 `("integration" "vscode" "ada" ,arch-dir ,os-dir))
+         ;; < ALS 25.0.20240915
+         (archive-path-1 `(,arch-dir ,os-dir)))
+    (dolist (archive-path `(,archive-path-2 ,archive-path-1))
+      (add-to-list 'exec-path
+                   (expand-file-name
+                    (string-join `(".cache/lsp/ada-ls" ,@archive-path) "/")
+                    user-emacs-directory)
+                   ;; Add to end of path so ALS found earlier on the
+                   ;; path is preferred.
+                   'append))))
 
 ;;;; Emacs
 
