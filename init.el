@@ -99,6 +99,20 @@ display the completion UI, this prefix length should be met."
   :demand t
   :commands (global-company-mode)
   :functions (company-indent-or-complete-common)
+  :preface
+  ;; Disable Company's de-duplication functionality since overloaded
+  ;; functions might be collapsed into a single entry.  This can
+  ;; happen, especially for LSP-supplied completions where some of the
+  ;; completion information might be lazily gathered, depending on the
+  ;; LSP client (e.g., `lsp-mode' and CompletionItem.detail), causing
+  ;; there to not be enough initial information for Company's
+  ;; de-duplication implementation to see that the server-supplied
+  ;; overloads are not duplicates and thus erroneously remove all but
+  ;; a single instance.
+  (defun init.el/company-capf (oldfun &rest r)
+    (unless (eq (car r) 'duplicates)
+      (apply oldfun r)))
+  (advice-add 'company-capf :around #'init.el/company-capf)
   :bind
   ;; Allow Company to be triggered manually through the normal
   ;; `indent-for-tab-command' binding.  See the following link for
