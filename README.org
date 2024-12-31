@@ -30,6 +30,9 @@ The Emacs configuration contains several points at which customization may be ap
 - User Option: init.el/completion-minimum-prefix-length ::
   Specifies the number of characters which should be typed before available completions cause the completion UI to be displayed.  This can be increased or decreased as desired and is a personal preference on what constitutes the right balance between helpfulness and annoyance.  Completion can always be triggered manually (via ~TAB~ -- see ~tab-always-indent~ documentation for details) when desired.  Setting this value to 0 will cause the completion UI to be displayed as soon as any completions are available. (default: 2)
 
+- User Option: init.el/completion-quick-access ::
+  Indicates whether quick access key bindings are active and visible when the completion UI is displayed.  When enabled, a numeric index will appear to the left of each candidate in the completion UI, where the index <i> corresponds to the M-<i> key binding.  Note that an index of 10 corresponds to a key binding of M-0.  Quick access key bindings provide immediate access to a candidate rather than requiring the user to navigate through each intermediate candidate to reach the desired one. (default: ~nil~)
+
 - User Option: init.el/preferred-diagnostics-reporter ::
   Specifies the diagnostic framework used for reporting warnings, errors, etc.  While these frameworks provide their own buffers for displaying diagnostics, an additional convenience package is provided to quickly display, visit and go to diagnostics in the buffer, bound to ~M-g M-d~.  Where supported, ~C-u M-g M-d~ will display diagnostics for the entire project instead of just the buffer. (default: ~flymake~)
 

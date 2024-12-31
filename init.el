@@ -18,6 +18,15 @@ automatically display the completion UI, even if
   :type 'boolean
   :group 'init.el)
 
+(defcustom init.el/completion-quick-access nil
+  "Display quick access index in completion UI.
+
+When quick access is enabled, the corresponding completion item can be
+selected via M-<i>, where <i> corresponds to the index displayed next to
+the completion item."
+  :type 'boolean
+  :group 'init.el)
+
 (defcustom init.el/completion-minimum-prefix-length 2
   "Minimum prefix length before displaying the completion UI.
 
@@ -128,6 +137,9 @@ display the completion UI, this prefix length should be met."
   :custom ((company-minimum-prefix-length init.el/completion-minimum-prefix-length)
            (company-icon-margin 3)
            (company-require-match nil)
+           (company-show-quick-access
+            (and init.el/completion-quick-access
+                 'left))
            (company-tooltip-align-annotations t))
   :config (global-company-mode))
 
