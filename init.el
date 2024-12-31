@@ -35,6 +35,12 @@ display the completion UI, this prefix length should be met."
   :type 'integer
   :group 'init.el)
 
+(defcustom init.el/preferred-completion-ui 'corfu
+  "Preferred completion User Interface."
+  :type '(choice (const corfu)
+                 (const company))
+  :group 'init.el)
+
 (defcustom init.el/preferred-diagnostics-reporter 'flymake
   "Preferred diagnostics reporter."
   :type '(choice (const flymake)
@@ -102,9 +108,12 @@ display the completion UI, this prefix length should be met."
   :ensure nil ; built-in
   :custom (tab-always-indent 'complete)) ; Complete when already indented
 
-;;;;; Company
+;;;;; Completion at Point
+
+;;;;;; Company
 
 (use-package company
+  :if (eq init.el/preferred-completion-ui 'company)
   :demand t
   :commands (global-company-mode)
   :functions (company-indent-or-complete-common)
@@ -149,6 +158,105 @@ display the completion UI, this prefix length should be met."
            (company-quickhelp-use-propertized-text nil))
   :commands (company-quickhelp-local-mode)
   :hook (company-mode . company-quickhelp-local-mode))
+
+;;;;;; Corfu
+
+(use-package corfu
+  :if (eq init.el/preferred-completion-ui 'corfu)
+  :demand t
+  :commands (global-corfu-mode)
+  :custom ((corfu-auto t)
+           (corfu-auto-delay 0.0)
+           (corfu-auto-prefix init.el/completion-minimum-prefix-length)
+           (corfu-cycle t))
+  :bind (:map corfu-map
+              (("RET" . nil))) ; remove from map
+  :config (global-corfu-mode))
+
+(use-package corfu-popupinfo
+  :ensure corfu ; part of corfu
+  :custom (corfu-popupinfo-delay 0.0)
+  :hook (corfu-mode . corfu-popupinfo-mode))
+
+(use-package corfu-indexed
+  :if (and (eq init.el/preferred-completion-ui 'corfu)
+           init.el/completion-quick-access)
+  :ensure corfu ; part of corfu
+  :demand t
+  :commands (corfu-indexed-mode)
+  :defines (corfu--index
+            corfu--scroll
+            corfu--total
+            corfu-count
+            corfu-indexed-mode
+            corfu-indexed-start)
+  :functions (corfu-insert)
+  :custom (corfu-indexed-start 1)
+  :config
+  (dolist (idx (number-sequence 0 (1- corfu-count)))
+    (let* ((key (mod (+ idx corfu-indexed-start) 10))
+           ;; The bound command is named with a "corfu-" prefix so it
+           ;; is matched in `corfu-continue-commands', otherwise Corfu
+           ;; will insert the current candidate and exit completion
+           ;; (in the `pre-command-hook' -- see `corfu--prepare')
+           ;; before the command is executed.
+           (name (intern (format "corfu-indexed--M%s" key))))
+      (fset name
+            (lambda ()
+              (interactive)
+              (let ((index (+ corfu--scroll idx)))
+                (when (and corfu-indexed-mode
+                           (< index corfu--total)
+                           (< index (+ corfu--scroll corfu-count)))
+                  (setq corfu--index index)
+                  (corfu-insert)))))
+      (define-key corfu-map (kbd (format "M-%s" key)) name)))
+  (corfu-indexed-mode))
+
+(use-package svg-lib
+  :defines (svg-lib-icon-collections)
+  :config
+  (add-to-list 'svg-lib-icon-collections
+               '("vscode-codicons" . "https://github.com/microsoft/vscode-codicons/raw/HEAD/src/icons/%s.svg")))
+
+(use-package kind-icon
+  :commands (kind-icon-margin-formatter)
+  :defines (corfu-margin-formatters)
+  :custom
+  (kind-icon-mapping
+   '((array          "a"   :icon "symbol-array"       :face font-lock-type-face              :collection "vscode-codicons")
+     (boolean        "b"   :icon "symbol-boolean"     :face font-lock-builtin-face           :collection "vscode-codicons")
+     (class          "c"   :icon "symbol-class"       :face font-lock-type-face              :collection "vscode-codicons")
+     (color          "#"   :icon "symbol-color"       :face success                          :collection "vscode-codicons")
+     (constant       "co"  :icon "symbol-constant"    :face font-lock-constant-face          :collection "vscode-codicons")
+     (constructor    "cn"  :icon "symbol-method"      :face font-lock-function-name-face     :collection "vscode-codicons")
+     (enum-member    "em"  :icon "symbol-enum-member" :face font-lock-builtin-face           :collection "vscode-codicons")
+     (enum           "e"   :icon "symbol-enum"        :face font-lock-builtin-face           :collection "vscode-codicons")
+     (event          "ev"  :icon "symbol-event"       :face font-lock-warning-face           :collection "vscode-codicons")
+     (field          "fd"  :icon "symbol-field"       :face font-lock-variable-name-face     :collection "vscode-codicons")
+     (file           "f"   :icon "symbol-file"        :face font-lock-string-face            :collection "vscode-codicons")
+     (folder         "d"   :icon "folder"             :face font-lock-doc-face               :collection "vscode-codicons")
+     (interface      "if"  :icon "symbol-interface"   :face font-lock-type-face              :collection "vscode-codicons")
+     (keyword        "kw"  :icon "symbol-keyword"     :face font-lock-keyword-face           :collection "vscode-codicons")
+     (method         "m"   :icon "symbol-method"      :face font-lock-function-name-face     :collection "vscode-codicons")
+     (function       "f"   :icon "symbol-method"      :face font-lock-function-name-face     :collection "vscode-codicons")
+     (module         "{"   :icon "symbol-namespace"   :face font-lock-type-face              :collection "vscode-codicons")
+     (numeric        "nu"  :icon "symbol-numeric"     :face font-lock-builtin-face           :collection "vscode-codicons")
+     (operator       "op"  :icon "symbol-operator"    :face font-lock-comment-delimiter-face :collection "vscode-codicons")
+     (property       "pr"  :icon "symbol-property"    :face font-lock-variable-name-face     :collection "vscode-codicons")
+     (reference      "rf"  :icon "references"         :face font-lock-doc-face               :collection "vscode-codicons")
+     (snippet        "S"   :icon "symbol-snippet"     :face font-lock-string-face            :collection "vscode-codicons")
+     (string         "s"   :icon "symbol-string"      :face font-lock-string-face            :collection "vscode-codicons")
+     (struct         "%"   :icon "symbol-structure"   :face font-lock-variable-name-face     :collection "vscode-codicons")
+     (text           "tx"  :icon "symbol-key"         :face shadow                           :collection "vscode-codicons")
+     (type-parameter "tp"  :icon "symbol-parameter"   :face font-lock-type-face              :collection "vscode-codicons")
+     (unit           "u"   :icon "symbol-ruler"       :face shadow                           :collection "vscode-codicons")
+     (value          "v"   :icon "symbol-enum"        :face font-lock-builtin-face           :collection "vscode-codicons")
+     (variable       "va"  :icon "symbol-variable"    :face font-lock-variable-name-face     :collection "vscode-codicons")
+     (t              "."   :icon "symbol-property"    :face shadow                           :collection "vscode-codicons")))
+  :init
+  (with-eval-after-load 'corfu
+    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)))
 
 ;;;;; Minibuffer Completion
 
@@ -383,6 +491,7 @@ display the completion UI, this prefix length should be met."
   (advice-add 'lsp-completion-at-point
               :filter-return #'init.el/fix-completion/lsp-completion-at-point)
   :custom ((lsp-auto-guess-root t)
+           (lsp-completion-provider :none)
            (lsp-diagnostics-provider
             (intern (concat ":" (symbol-name init.el/preferred-diagnostics-reporter))))
            (lsp-eldoc-render-all t)
