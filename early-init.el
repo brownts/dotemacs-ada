@@ -2,7 +2,8 @@
 ;;; commentary:
 ;;; code:
 
-;; (setq init.el/completion-allow-lsp-trigger-chars nil)
+;; (setq init.el/completion-lsp-allow-trigger-chars nil)
+;; (setq init.el/completion-lsp-disallowed-categories nil)
 ;; (setq init.el/completion-minimum-prefix-length 3)
 ;; (setq init.el/completion-quick-access t)
 ;; (setq init.el/preferred-completion-ui 'company)

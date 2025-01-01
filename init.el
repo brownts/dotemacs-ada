@@ -9,13 +9,19 @@
   :group 'emacs
   :prefix "init.el/")
 
-(defcustom init.el/completion-allow-lsp-trigger-chars t
+(defcustom init.el/completion-lsp-allow-trigger-chars t
   "Allow LSP completion trigger characters to display completion UI.
 
 This will allow Language Server specified trigger characters to
 automatically display the completion UI, even if
 `init.el/completion-minimum-prefix-length' has not been met."
   :type 'boolean
+  :group 'init.el)
+
+(defcustom init.el/completion-lsp-disallowed-contexts '(comment string)
+  "Disallow LSP completion within specified contexts."
+  :type '(set (const :tag "Avoid completion in comments" comment)
+              (const :tag "Avoid completion in strings"  string))
   :group 'init.el)
 
 (defcustom init.el/completion-quick-access nil
@@ -368,22 +374,31 @@ display the completion UI, this prefix length should be met."
        ;; cookie in order to display multi-line documentation.
        (funcall (car r) info))))
   ;; Workaround completion issues
-  (defun init.el/fix-completion/eglot-completion-at-point (result)
-    (pcase result
-      (`(,beg ,end ,table . ,plist)
-       (let (settings case-fold-table)
-         ;; Allow next completion at point function (CAPF) specified
-         ;; in `completion-at-point-functions' to be queried when
-         ;; Language Server doesn't have any completions at point.
-         (setq settings (append settings '(:exclusive no)))
-         ;; When configured, prevent LSP trigger characters from
-         ;; initiating completion before hitting the threshold
-         ;; specified by `init.el/completion-minimum-prefix-length'.
-         (unless init.el/completion-allow-lsp-trigger-chars
-           (setq settings (append settings '(:company-prefix-length nil))))
-         ;; Perform case folding when matching against completion results
-         (setq case-fold-table (completion-table-case-fold table))
-         `(,beg ,end ,case-fold-table ,@settings ,@plist)))))
+  (defun init.el/around-advice/eglot-completion-at-point (oldfun &rest _)
+    (when (or (null init.el/completion-lsp-disallowed-contexts)
+              (let ((status (syntax-ppss)))
+                (seq-every-p
+                 (lambda (context)
+                   (pcase context
+                     ('comment (not (nth 4 status)))
+                     ('string  (not (nth 3 status)))
+                     (_        (error "Unknown context: %s" context))))
+                 init.el/completion-lsp-disallowed-contexts)))
+      (pcase (funcall oldfun)
+        (`(,beg ,end ,table . ,plist)
+         (let (settings case-fold-table)
+           ;; Allow next completion at point function (CAPF) specified
+           ;; in `completion-at-point-functions' to be queried when
+           ;; Language Server doesn't have any completions at point.
+           (setq settings (append settings '(:exclusive no)))
+           ;; When configured, prevent LSP trigger characters from
+           ;; initiating completion before hitting the threshold
+           ;; specified by `init.el/completion-minimum-prefix-length'.
+           (unless init.el/completion-lsp-allow-trigger-chars
+             (setq settings (append settings '(:company-prefix-length nil))))
+           ;; Perform case folding when matching against completion results
+           (setq case-fold-table (completion-table-case-fold table))
+           `(,beg ,end ,case-fold-table ,@settings ,@plist))))))
   :init
   ;; Force upgrade to ELPA version for Emacs 29
   (unless (or (> emacs-major-version 29)
@@ -394,7 +409,7 @@ display the completion UI, this prefix length should be met."
   (advice-add 'eglot-hover-eldoc-function
               :filter-args #'init.el/multiline/eglot-hover-eldoc-function)
   (advice-add 'eglot-completion-at-point
-              :filter-return #'init.el/fix-completion/eglot-completion-at-point)
+              :around #'init.el/around-advice/eglot-completion-at-point)
   :hook ((ada-ts-mode gpr-ts-mode) . eglot-ensure)
   :custom (eglot-extend-to-xref t) ; Consider external refs, part of project.
   :config
@@ -469,27 +484,36 @@ display the completion UI, this prefix length should be met."
     (declare-function lsp "lsp-mode")
     (add-hook 'hack-local-variables-hook #'lsp t 'local))
   ;; Workaround completion issues
-  (defun init.el/fix-completion/lsp-completion-at-point (result)
-    (pcase result
-      (`(,beg ,end ,table . ,plist)
-       (let (settings case-fold-table)
-         ;; Allow next completion at point function (CAPF) specified
-         ;; in `completion-at-point-functions' to be queried when
-         ;; Language Server doesn't have any completions at point.
-         (setq settings (append settings '(:exclusive no)))
-         ;; When configured, prevent LSP trigger characters from
-         ;; initiating completion before hitting the threshold
-         ;; specified by `init.el/completion-minimum-prefix-length'.
-         (unless init.el/completion-allow-lsp-trigger-chars
-           (setq settings (append settings '(:company-prefix-length nil))))
-         ;; Perform case folding when matching against completion results
-         (setq case-fold-table (completion-table-case-fold table))
-         `(,beg ,end ,case-fold-table ,@settings ,@plist)))))
+  (defun init.el/around-advice/lsp-completion-at-point (oldfun &rest _)
+    (when (or (null init.el/completion-lsp-disallowed-contexts)
+              (let ((status (syntax-ppss)))
+                (seq-every-p
+                 (lambda (context)
+                   (pcase context
+                     ('comment (not (nth 4 status)))
+                     ('string  (not (nth 3 status)))
+                     (_        (error "Unknown context: %s" context))))
+                 init.el/completion-lsp-disallowed-contexts)))
+      (pcase (funcall oldfun)
+        (`(,beg ,end ,table . ,plist)
+         (let (settings case-fold-table)
+           ;; Allow next completion at point function (CAPF) specified
+           ;; in `completion-at-point-functions' to be queried when
+           ;; Language Server doesn't have any completions at point.
+           (setq settings (append settings '(:exclusive no)))
+           ;; When configured, prevent LSP trigger characters from
+           ;; initiating completion before hitting the threshold
+           ;; specified by `init.el/completion-minimum-prefix-length'.
+           (unless init.el/completion-lsp-allow-trigger-chars
+             (setq settings (append settings '(:company-prefix-length nil))))
+           ;; Perform case folding when matching against completion results
+           (setq case-fold-table (completion-table-case-fold table))
+           `(,beg ,end ,case-fold-table ,@settings ,@plist))))))
   :init
   (advice-add 'lsp--render-string
               :filter-args #'init.el/fix-eol/lsp--render-string)
   (advice-add 'lsp-completion-at-point
-              :filter-return #'init.el/fix-completion/lsp-completion-at-point)
+              :around #'init.el/around-advice/lsp-completion-at-point)
   :custom ((lsp-auto-guess-root t)
            (lsp-completion-provider :none)
            (lsp-diagnostics-provider

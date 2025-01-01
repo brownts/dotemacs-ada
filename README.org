@@ -24,8 +24,11 @@ If manually installing, the shard libraries should be placed in the =tree-sitter
 
 The Emacs configuration contains several points at which customization may be applied.  These user options are specified at the beginning of the =init.el= file with a series of ~defcustom~ declarations.  The expectation is that any user-specific customization should be applied in the =early-init.el= file, thus leaving the =init.el= unmodified.  The =early-init.el= file already contains a number of commented lines for toggling many of the configurations.  To override the setting's default value, it is as simple as removing the comment prefix from the corresponding line.  The following describes the available settings and their defaults.
 
-- User Option: init.el/completion-allow-lsp-trigger-chars ::
+- User Option: init.el/completion-lsp-allow-trigger-chars ::
   Whether trigger characters specified by the Language Server can cause the completion UI to be displayed.  Typically, these are characters such as "(" and "," which trigger completion for subroutine parameters, although use of " " (i.e., space) is also common.  If the Language Server is overzealous, the frequency of the completion UI being displayed can become a nuisance, therefore it may be desirable to disable this feature.  Furthermore, trigger characters can allow the completion UI to be displayed without having to meet the ~init.el/completion-minimum-prefix-length~ specified limit, therefore it's very common for the UI to be displayed after only having typed a space. (default: ~t~)
+
+- User Option: init.el/completion-lsp-disallowed-contexts ::
+  Specifies the contexts under which LSP completions are to be avoided.  This can be helpful when the Language Server provides nonsensical completion suggestions, such as in comments and strings. (default: ~(comment string)~)
 
 - User Option: init.el/completion-minimum-prefix-length ::
   Specifies the number of characters which should be typed before available completions cause the completion UI to be displayed.  This can be increased or decreased as desired and is a personal preference on what constitutes the right balance between helpfulness and annoyance.  Completion can always be triggered manually (via ~TAB~ -- see ~tab-always-indent~ documentation for details) when desired.  Setting this value to 0 will cause the completion UI to be displayed as soon as any completions are available. (default: 2)
