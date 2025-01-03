@@ -523,6 +523,7 @@ display the completion UI, this prefix length should be met."
            (lsp-enable-on-type-formatting nil) ; Interferes with Emacs indenting
            (lsp-headerline-breadcrumb-enable nil)
            (lsp-keymap-prefix "C-c l")
+           (lsp-modeline-diagnostics-enable nil)
            (lsp-semantic-tokens-enable t)
            (lsp-enable-imenu nil)) ; Let major mode control Imenu
   :custom-face
@@ -551,12 +552,50 @@ display the completion UI, this prefix length should be met."
   :custom (project-vc-extra-root-markers
            '("adainclude" "alire.toml" ".project" ".projectile" ".vscode")))
 
-;;;; Which Function
+;;;; User Interface
+
+(use-package display-line-numbers
+  :ensure nil ; built-in
+  :custom ((display-line-numbers-grow-only t)
+           (display-line-numbers-width-start t))
+  :hook (prog-mode . display-line-numbers-mode))
+
+(use-package emacs
+  :ensure nil ; built-in
+  :bind ([remap kill-buffer] . kill-current-buffer) ; Don't prompt
+  :custom (use-short-answers t))
+
+(use-package tool-bar
+  :ensure nil ; built-in
+  :demand t
+  :config (tool-bar-mode -1))
 
 (use-package which-func
   :ensure nil ; built-in
   :demand t
+  :custom ((idle-update-delay 0.1)        ; <30.1
+           (which-func-update-delay 0.1)) ; >=30.1
   :config (which-function-mode))
+
+(use-package which-key
+  :demand t
+  :config (which-key-mode))
+
+;;;;; Mode-line
+
+(use-package minions
+  :demand t
+  :commands (minions-mode)
+  :custom (minions-prominent-modes
+           '(flycheck-mode flymake-mode lsp-mode))
+  :config (minions-mode))
+
+(use-package mode-line
+  :ensure nil ; built-in
+  :custom ((column-number-mode t)
+           (line-number-mode t)
+           (mode-line-position-column-line-format '(" (L%l, C%C)"))
+           (size-indication-mode t)))
 
 ;;;; Xref
 
