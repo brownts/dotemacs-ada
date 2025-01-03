@@ -11,6 +11,8 @@
 ;; (setq init.el/preferred-documentation-ui 'echo)
 ;; (setq init.el/preferred-lsp-client 'eglot)
 
+(setq-default indent-tabs-mode nil)
+
 (provide 'early-init)
 
 ;;; early-init.el ends here
