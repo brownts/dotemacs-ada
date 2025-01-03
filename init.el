@@ -350,6 +350,11 @@ display the completion UI, this prefix length should be met."
            (eldoc-box-only-multi-line nil))
   :hook (prog-mode . eldoc-box-hover-mode))
 
+;;;; Editor
+
+(use-package comment-dwim-2
+  :bind ([remap comment-dwim] . comment-dwim-2)) ; Support line comment
+
 ;;;; Eglot
 
 (use-package eglot
