@@ -370,6 +370,12 @@ display the completion UI, this prefix length should be met."
 (use-package comment-dwim-2
   :bind ([remap comment-dwim] . comment-dwim-2)) ; Support line comment
 
+;; Remember position in previously visited files.
+(use-package saveplace
+  :ensure nil ; built-in
+  :demand t
+  :config (save-place-mode))
+
 ;;;; Eglot
 
 (use-package eglot
