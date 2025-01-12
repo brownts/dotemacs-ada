@@ -103,7 +103,7 @@ display the completion UI, this prefix length should be met."
 ;;;; Ada
 
 (use-package ada-ts-mode
-  :defines (consult-imenu-config org-src-lang-modes)
+  :defines (ada-ts-mode-map consult-imenu-config org-src-lang-modes)
   :custom ((ada-ts-mode-grammar-install 'auto)
            (ada-ts-mode-indent-backend 'lsp)) ; Use LSP-based indenting
   :bind (:map ada-ts-mode-map
@@ -156,6 +156,7 @@ display the completion UI, this prefix length should be met."
   :if (eq init.el/preferred-completion-ui 'company)
   :demand t
   :commands (global-company-mode)
+  :defines (company-mode-map company-active-map)
   :functions (company-indent-or-complete-common)
   :preface
   ;; Disable Company's de-duplication functionality since overloaded
@@ -204,6 +205,7 @@ display the completion UI, this prefix length should be met."
 (use-package corfu
   :if (eq init.el/preferred-completion-ui 'corfu)
   :demand t
+  :defines (corfu-map)
   :commands (global-corfu-mode)
   :custom ((corfu-auto t)
            (corfu-auto-delay 0.0)
@@ -590,6 +592,7 @@ display the completion UI, this prefix length should be met."
 ;;;; Markdown
 
 (use-package markdown-mode
+  :defines (markdown-code-lang-modes)
   :config
   ;; Some LSP servers use "plaintext" in code fences (i.e., Ada LS), but
   ;; `markdown-mode' (used by Eglot) doesn't provide a mode mapping and ends up
@@ -631,6 +634,7 @@ display the completion UI, this prefix length should be met."
 
 (use-package which-key
   :demand t
+  :commands (which-key-mode)
   :config (which-key-mode))
 
 ;;;;; Mode-line
