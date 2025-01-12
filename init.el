@@ -65,6 +65,21 @@ display the completion UI, this prefix length should be met."
                  (const :tag "Echo Area"   echo))
   :group 'init.el)
 
+;;;; Configuration
+
+;; Key bindings to easily locate user configuration.
+(use-package emacs
+  :ensure nil ; built-in
+  :preface
+  (defun init.el/find-file-user-init ()
+    (interactive)
+    (find-file (locate-user-emacs-file "init.el")))
+  (defun init.el/find-file-user-early-init ()
+    (interactive)
+    (find-file (locate-user-emacs-file "early-init.el")))
+  :bind (("<f12>"   . init.el/find-file-user-init)
+         ("S-<f12>" . init.el/find-file-user-early-init)))
+
 ;;;; Custom
 
 ;; Don't pollute this file with custom settings
