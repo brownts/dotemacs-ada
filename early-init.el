@@ -13,6 +13,9 @@
 
 (setq-default indent-tabs-mode nil)
 
+;; Ignore native compilation warnings (usually a nuisance)
+(setq native-comp-async-report-warnings-errors 'silent)
+
 ;; Byte-compiled files may not be compatible between different Emacs
 ;; versions, and since (M)ELPA installed packages are compiled in
 ;; their own sub-directories within `package-user-dir', use a separate
