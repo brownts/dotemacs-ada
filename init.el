@@ -90,6 +90,7 @@ display the completion UI, this prefix length should be met."
 
 (setopt use-package-always-ensure t)
 (setopt use-package-always-defer t)
+(setopt use-package-enable-imenu-support t)
 
 ;;;; package.el
 
@@ -102,7 +103,7 @@ display the completion UI, this prefix length should be met."
 ;;;; Ada
 
 (use-package ada-ts-mode
-  :defines (org-src-lang-modes)
+  :defines (consult-imenu-config org-src-lang-modes)
   :custom ((ada-ts-mode-grammar-install 'auto)
            (ada-ts-mode-indent-backend 'lsp)) ; Use LSP-based indenting
   :bind (:map ada-ts-mode-map
@@ -110,15 +111,31 @@ display the completion UI, this prefix length should be met."
                ("C-c C-o" . ada-ts-mode-find-other-file)
                ("C-c C-p" . ada-ts-mode-find-project-file)))
   :init
+  (with-eval-after-load 'consult-imenu
+    (add-to-list
+     'consult-imenu-config
+     '(ada-ts-mode :types ((?p "Package")
+                           (?s "Subprogram" font-lock-function-name-face)
+                           (?t "Type Declaration" font-lock-type-face)
+                           (?w "With Clause")))))
   (with-eval-after-load 'org-src
     (add-to-list 'org-src-lang-modes '("ada" . ada-ts))))
 
 ;;;; GNAT Project
 
 (use-package gpr-ts-mode
-  :defines (org-src-lang-modes)
+  :defines (consult-imenu-config org-src-lang-modes)
   :custom (gpr-ts-mode-grammar-install 'auto)
   :init
+  (with-eval-after-load 'consult-imenu
+    (add-to-list
+     'consult-imenu-config
+     '(gpr-ts-mode :types ((?a "Attribute")
+                           (?P "Project")
+                           (?p "Package")
+                           (?t "Type")
+                           (?v "Variable")
+                           (?w "With Clause")))))
   (with-eval-after-load 'org-src
     (add-to-list 'org-src-lang-modes '("gpr" . gpr-ts)))
   :hook (gpr-ts-mode . gpr-ts-auto-case-mode))
@@ -128,6 +145,8 @@ display the completion UI, this prefix length should be met."
 (use-package emacs
   :ensure nil ; built-in
   :custom (tab-always-indent 'complete)) ; Complete when already indented
+
+(setq completion-ignore-case t)
 
 ;;;;; Completion at Point
 
@@ -488,7 +507,14 @@ display the completion UI, this prefix length should be met."
 (use-package imenu
   :ensure nil ; built-in
   :custom (imenu-auto-rescan t)
+  :init
+  (add-to-list 'completion-category-overrides
+               '(imenu (styles . (substring))))
   :hook ((ada-ts-mode gpr-ts-mode) . imenu-add-menubar-index))
+
+(use-package consult-imenu
+  :ensure consult ; part of consult
+  :bind ("M-g M-i" . consult-imenu))
 
 ;;;; lsp-mode
 
