@@ -397,6 +397,13 @@ display the completion UI, this prefix length should be met."
   :demand t
   :config (save-place-mode))
 
+;;;;; Selection
+
+(use-package delsel
+  :ensure nil ; built-in
+  :demand t
+  :config (delete-selection-mode))
+
 ;;;; Eglot
 
 (use-package eglot
