@@ -397,6 +397,25 @@ display the completion UI, this prefix length should be met."
   :demand t
   :config (save-place-mode))
 
+;;;;; Indentation
+
+(use-package dtrt-indent
+  :commands (dtrt-indent-mode)
+  :preface
+  (defun init.el/local/setup-dtrt-indent ()
+    "Enable `dtrt-indent-mode' when .editorconfig doesn't exist."
+    (unless (locate-dominating-file (buffer-file-name) ".editorconfig")
+      (dtrt-indent-mode)))
+  (defun init.el/setup-dtrt-indent ()
+    "Maybe enable `dtrt-indent-mode' from `hack-local-variables-hook'."
+    (add-hook 'hack-local-variables-hook #'init.el/local/setup-dtrt-indent t 'local))
+  :hook (prog-mode . init.el/setup-dtrt-indent))
+
+(use-package editorconfig
+  :demand t
+  :commands (editorconfig-mode)
+  :config (editorconfig-mode))
+
 ;;;;; Selection
 
 (use-package delsel
