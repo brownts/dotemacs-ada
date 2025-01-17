@@ -605,7 +605,12 @@ display the completion UI, this prefix length should be met."
 (use-package project
   :ensure nil ; built-in
   :custom (project-vc-extra-root-markers
-           '("adainclude" "alire.toml" ".project" ".projectile" ".vscode")))
+           '("adainclude"  ; GNAT run-time directory
+             "alire.toml"  ; Alire project
+             ".als.json"   ; Ada Language Server
+             ".project"    ; Eclipse project
+             ".projectile" ; Projectile project marker
+             ".vscode")))  ; VSCode project
 
 ;;;; User Interface
 
