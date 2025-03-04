@@ -103,13 +103,9 @@ display the completion UI, this prefix length should be met."
 ;;;; Ada
 
 (use-package ada-ts-mode
-  :defines (ada-ts-mode-map consult-imenu-config org-src-lang-modes)
+  :defines (consult-imenu-config org-src-lang-modes)
   :custom ((ada-ts-mode-grammar-install 'auto)
            (ada-ts-mode-indent-backend 'lsp)) ; Use LSP-based indenting
-  :bind (:map ada-ts-mode-map
-              (("C-c C-b" . ada-ts-mode-defun-comment-box)
-               ("C-c C-o" . ada-ts-mode-find-other-file)
-               ("C-c C-p" . ada-ts-mode-find-project-file)))
   :init
   (with-eval-after-load 'consult-imenu
     (add-to-list
