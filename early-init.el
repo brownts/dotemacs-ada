@@ -10,6 +10,7 @@
 ;; (setq init.el/preferred-diagnostics-reporter 'flycheck)
 ;; (setq init.el/preferred-documentation-ui 'echo)
 ;; (setq init.el/preferred-lsp-client 'eglot)
+;; (setq ada-ts-mode-indent-backend 'lsp)
 
 (setq-default indent-tabs-mode nil)
 

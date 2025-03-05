@@ -104,8 +104,7 @@ display the completion UI, this prefix length should be met."
 
 (use-package ada-ts-mode
   :defines (consult-imenu-config org-src-lang-modes)
-  :custom ((ada-ts-mode-grammar-install 'auto)
-           (ada-ts-mode-indent-backend 'lsp)) ; Use LSP-based indenting
+  :custom (ada-ts-mode-grammar-install 'auto)
   :init
   (with-eval-after-load 'consult-imenu
     (add-to-list
