@@ -65,6 +65,16 @@ display the completion UI, this prefix length should be met."
                  (const :tag "Echo Area"   echo))
   :group 'init.el)
 
+(defcustom init.el/lsp-mode-specific-settings
+  '((gpr-ts-mode lsp-semantic-tokens-enable nil))
+  "Mode-specific settings for \\='lsp-mode\\='."
+  :type '(alist :tag "Mode-Specific Settings"
+                :key-type (symbol :tag "Major Mode")
+                :value-type (plist :tag "Settings"
+                                   :key-type (symbol :tag "Variable Name")
+                                   :value-type (sexp :tag "Value")))
+  :group 'init.el)
+
 ;;;; Configuration
 
 ;; Key bindings to easily locate user configuration.
@@ -553,11 +563,18 @@ display the completion UI, this prefix length should be met."
                                       (split-string value eol))
                                     strings))))
       (cons (string-join strings "\n") (cdr args))))
+  (defun init.el/lsp-setup ()
+    (when-let* ((settings (alist-get major-mode init.el/lsp-mode-specific-settings)))
+      (while settings
+        (let ((variable (pop settings))
+              (value (pop settings)))
+          (set (make-local-variable variable) value))))
+    (lsp))
   (defun init.el/lsp-mode ()
     ;; Delay start until after initialization of local variables as they may
     ;; contain `lsp-mode' configuration variables.
     (declare-function lsp "lsp-mode")
-    (add-hook 'hack-local-variables-hook #'lsp t 'local))
+    (add-hook 'hack-local-variables-hook #'init.el/lsp-setup t 'local))
   ;; Workaround completion issues
   (defun init.el/around-advice/lsp-completion-at-point (oldfun &rest _)
     (when (or (null init.el/completion-lsp-disallowed-contexts)

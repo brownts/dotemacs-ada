@@ -53,6 +53,9 @@ As an example of overriding a default configuration, to configure ~eglot~ as the
 (setq init.el/preferred-lsp-client 'eglot)
 #+END_SRC elisp
 
+- User Option: init.el/lsp-mode-specific-settings ::
+  Settings for ~lsp-mode~ which are to be applied to specific major modes are captured here.  This may enable or disable certain features which are desired only in a subset of modes and thus differ from the default configuration.  This is an attribute list where the key is the major mode and the value is a property list.  The property list key is the variable name to be set buffer-local and the value is the desired value for the variable.  The variables are expected to be ~lsp-mode~ customization variables (e.g., ~lsp-semantic-tokens-enable~).
+
 * Language Server Installation
 
 The ~lsp-mode~ package includes the ability to install the Ada Language Server when ~lsp-mode~ is enabled in an Ada or GPR buffer.  If the Ada Language Server is installed in this manner, it will be installed in the =.cache/lsp/ada-ls= directory beneath ~user-emacs-directory~ (e.g., =~/.emacs-ada.d/.cache/lsp/ada-ls/=).  If the Ada Language Server is found on the path, the server found there will be used instead.  If desired, the Language Server can be installed manually by downloading it from the GitHub [[https://github.com/AdaCore/ada_language_server/releases][repository]] and placing it somewhere on the path.
