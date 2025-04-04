@@ -222,7 +222,7 @@ display the completion UI, this prefix length should be met."
 
 (use-package corfu-popupinfo
   :ensure corfu ; part of corfu
-  :custom (corfu-popupinfo-delay 0.0)
+  :custom (corfu-popupinfo-delay 0.01)
   :hook (corfu-mode . corfu-popupinfo-mode))
 
 (use-package corfu-indexed
